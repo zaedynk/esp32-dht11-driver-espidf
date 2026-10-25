@@ -1,14 +1,9 @@
-// The DHT11 is an ultra-low-cost, pre-calibrated digital temperature and humidity sensor module commonly used with microcontrollers like Arduino and Raspberry Pi.
-
-// Key Specifications
-
-// Temperature Range: 0°C to 50°C (accuracy of ±2°C)
-// Humidity Range: 20% to 90% RH (accuracy of ±5% RH)
-// Operating Voltage: 3.3V to 5.5V DC
-// Output Signal: Single-bus digital signal
-// Sampling Rate: Once every 2 seconds
-
 #include "dht11.hpp"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+static const char* TAG = "MAIN_APP";
 
 extern "C" {
 
@@ -16,6 +11,20 @@ extern "C" {
 
         Aerospace::DHT11 sensor(GPIO_NUM_4);
 
+        while(true) {
+            esp_err_t status = sensor.Read();
+
+            if(status == ESP_OK) {
+                ESP_LOGI(TAG, "Temp: %d C | Humidity: %d %%", 
+                        sensor.Get_Temp(), 
+                        sensor.Get_Humidity());
+            } else {
+                ESP_LOGE(TAG, "Sensor read failed. Error code: %d", status);
+            }
+            
+            // Delay before reading again
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
+        }
     }
 
 }
