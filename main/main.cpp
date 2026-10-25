@@ -16,7 +16,6 @@ extern "C" {
 
         Aerospace::DHT11 sensor(GPIO_NUM_4);
 
-
     }
 
 }
