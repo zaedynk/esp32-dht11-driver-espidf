@@ -26,15 +26,22 @@ Aerospace::DHT11::DHT11(gpio_num_t pin) {
 }
 
 esp_err_t Aerospace::DHT11::Read() {
+    if(error != ESP_OK) {
+        return error;
+    }
+
     int64_t result {0};
     int64_t now = esp_timer_get_time();
 
     // If 2 seconds haven't passed since the last read, drop out early
-    if (now - last_read_us < 2000000) {
+    if (now - last_read_us < 2000000 && has_valid_reading) {
         return ESP_OK; // Gracefully return cached temperature/humidity values
     }
 
     Send_Start_Signal();
+
+    // Disable interrupts
+    portENTER_CRITICAL(&spinlock);
 
     // Wait low
     result = Wait_For_Level(0, 100);
@@ -56,6 +63,9 @@ esp_err_t Aerospace::DHT11::Read() {
         portEXIT_CRITICAL(&spinlock);
         return ESP_ERR_TIMEOUT;
     }
+
+    // Enable interrupts
+    portEXIT_CRITICAL(&spinlock);
 
     // Clear previous data
     for (int d = 0; d < 5; ++d) { data[d] = 0; }
@@ -108,6 +118,7 @@ esp_err_t Aerospace::DHT11::Read() {
 
     // Save successful timestamp boundary for the next 2-second check
     last_read_us = esp_timer_get_time();
+    has_valid_reading = true;
 
     // Everything succeeded
     return ESP_OK;

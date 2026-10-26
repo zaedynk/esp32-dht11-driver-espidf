@@ -27,6 +27,7 @@ namespace Aerospace {
         int64_t last_read_us{0};
         uint8_t temperature {0};
         uint8_t humidity {0}; 
+        bool has_valid_reading{false};
     };
 
 }
